@@ -10,7 +10,7 @@ from sectorization2.data.data_raw2 import raw_data as metrics2
 from sectorization2.data.data_raw3 import raw_data as metrics3
 
 
-metrics = metrics3
+metrics = metrics2
 
 
 def convert_to_decimal(metrics:List[tuple]) -> dict:
