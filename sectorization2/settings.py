@@ -19,3 +19,8 @@ CONFIGURATIONS = {
     # "360°(3x120°)": (120, 120, 120,),
     #"60°(1x60°)": (60, ),
 }
+
+METHOD_STRATEGY = "Topsis"
+#METHOD_STRATEGY = "Евклидово расстояние"
+
+

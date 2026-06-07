@@ -27,8 +27,16 @@ for cluster_name, sector_config in config.items():
 
 # 1. Создаем стратегии
 filter_strategy = StandardParetoFilter()
-#selector_strategy = DistanceBasedSelector()
-selector_strategy = TopsisSelector()
+
+if settings.METHOD_STRATEGY == "Topsis":
+    selector_strategy = TopsisSelector()
+elif settings.METHOD_STRATEGY == "Евклидово расстояние":
+    selector_strategy = DistanceBasedSelector()
+else:
+    raise ValueError(
+        f"Неизвестная стратегия выбора: '{settings.METHOD_STRATEGY}'. "
+        f"Допустимые значения: 'Topsis', 'Евклидово расстояние'."
+    )
 
 # 2. Создаем провайдеров для каждого кластера (Dependency Injection)
 providers = {
