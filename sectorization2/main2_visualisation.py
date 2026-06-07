@@ -5,10 +5,12 @@ from sectorization2.sector_cluster import SectorCluster
 from sectorization2.sector import Sector
 from sectorization2.pareto_analyzer2 import (
     StandardParetoFilter,
-    DistanceBasedSelector,
     ClusterParetoProvider,
     MultiClusterParetoAnalyzer,
 )
+from sectorization2.pareto_selector_evklid import DistanceBasedSelector
+from sectorization2.pareto_selector_topsis import TopsisSelector
+
 
 
 degradation_zone_width = settings.DEGRADATION_ZONE_WIDTH
@@ -27,7 +29,8 @@ for cluster_name, sector_config in config.items():
 
 # 1. Создаем стратегии
 filter_strategy = StandardParetoFilter()
-selector_strategy = DistanceBasedSelector()
+#selector_strategy = DistanceBasedSelector()
+selector_strategy = TopsisSelector()
 
 # 2. Создаем провайдеров для каждого кластера (Dependency Injection)
 providers = {

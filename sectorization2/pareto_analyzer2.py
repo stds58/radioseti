@@ -1,40 +1,8 @@
-from dataclasses import dataclass
-from typing import List, Optional, Dict, Protocol
+from typing import List, Optional, Dict
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-
-
-# ==============================================================================
-# 1. МОДЕЛИ ДАННЫХ (DTO)
-# Используем dataclass для строгой типизации и иммутабельности (SRP)
-# ==============================================================================
-@dataclass(frozen=True)
-class ParetoPoint:
-    azimuth: int
-    imbalance: float
-    degradation: float
-    traffic: float
-    cluster_id: str  # Идентификатор источника (важно для мульти-кластерного анализа)
-
-
-# ==============================================================================
-# 2. ИНТЕРФЕЙСЫ (Protocols) - DIP и ISP
-# ==============================================================================
-class ParetoFilterStrategy(Protocol):
-    """Стратегия фильтрации недоминируемых решений."""
-
-    def filter(self, points: List[ParetoPoint]) -> List[ParetoPoint]:
-        ...
-
-
-class ParetoFrontProvider(Protocol):
-    """Интерфейс для любого источника, который может выдать Парето-фронт."""
-
-    @property
-    def cluster_id(self) -> str: ...
-
-    def get_front(self) -> List[ParetoPoint]: ...
+from sectorization2.pareto_interface import ParetoPoint, ParetoFilterStrategy, ParetoFrontProvider
 
 
 # ==============================================================================
@@ -69,42 +37,6 @@ class StandardParetoFilter:
                 pareto.append(point_i)
         return pareto
 
-
-class DistanceBasedSelector:
-    """Выбор по евклидову расстоянию до идеальной точки (0 imbalance, 0 degradation, MAX traffic)."""
-
-    def select(self, points: List[ParetoPoint]) -> Optional[ParetoPoint]:
-        if not points:
-            return None
-
-        min_imb, max_imb = min(p.imbalance for p in points), max(p.imbalance for p in points)
-        min_deg, max_deg = min(p.degradation for p in points), max(p.degradation for p in points)
-        min_traf, max_traf = min(p.traffic for p in points), max(p.traffic for p in points)
-
-        best_point = None
-        min_distance = float('inf')
-
-        for point in points:
-            # Нормализация [0, 1]
-            # Находим диапазоны каждого критерия. Для нормализации нужно знать минимум и максимум по каждому измерению
-            # (imbalance, degradation, traffic) среди всех точек фронта.
-            # Это позволит привести все значения к единой шкале [0, 1].
-            imb_norm = (point.imbalance - min_imb) / (max_imb - min_imb) if max_imb != min_imb else 0
-            deg_norm = (point.degradation - min_deg) / (max_deg - min_deg) if max_deg != min_deg else 0
-            traf_norm = (point.traffic - min_traf) / (max_traf - min_traf) if max_traf != min_traf else 0
-
-            # ✅ РАССТОЯНИЕ ДО ТОЧКИ (0, 0, 1)
-            distance = np.sqrt(
-                imb_norm ** 2 +
-                deg_norm ** 2 +       # расстояние от текущего до ИДЕАЛА 0 deg_norm²
-                (1 - traf_norm) ** 2  # расстояние от текущего до ИДЕАЛА 1 (1 - traf_norm)²
-            )
-
-            if distance < min_distance:
-                min_distance = distance
-                best_point = point
-
-        return best_point
 
 
 # ==============================================================================
