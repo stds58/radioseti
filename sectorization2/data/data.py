@@ -5,10 +5,9 @@
 from decimal import Decimal
 from typing import List
 
-
-from data_raw1 import raw_data as metrics1
-from data_raw2 import raw_data as metrics2
-from data_raw3 import raw_data as metrics3
+from sectorization2.data.data_raw1 import raw_data as metrics1
+from sectorization2.data.data_raw2 import raw_data as metrics2
+from sectorization2.data.data_raw3 import raw_data as metrics3
 
 
 metrics = metrics3

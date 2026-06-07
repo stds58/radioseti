@@ -282,6 +282,14 @@ class SectorOptimizer:
                 'total_traffic': total_traffic_sum,
             }
 
+        # --- ОТЛАДКА: Печатаем диапазоны значений ---
+        all_imb = [m['imbalance'] for m in metrics.values()]
+        all_deg = [m['total_degradation'] for m in metrics.values()]
+        print(f"\n[DBUG] Imbalance range: {min(all_imb):.2f} - {max(all_imb):.2f}")
+        print(f"[DBUG] Degradation range: {min(all_deg):.2f} - {max(all_deg):.2f}")
+        print(f"[DBUG] Веса: Imb={imbalance_weight}, Deg={degradation_weight}")
+        # --------------------------------------------
+
         # 2. Нормализация метрик для корректного сравнения (избегаем проблем с разными масштабами)
         max_imbalance = max(m['imbalance'] for m in metrics.values())
         max_degradation = max(m['total_degradation'] for m in metrics.values())
@@ -401,6 +409,7 @@ def create_report(
         'optimizer': optimizer,
         'sector_interval_map': sector_interval_map,
         'best_traffic_azimuth': best_traffic_azimuth,
+        'balanced_result': balanced_result,
     }
 
 
@@ -431,45 +440,21 @@ def main(
                 traffic_weight=traffic_weight,
             )
 
-            # === ОБРАБОТКА НЕСКОЛЬКИХ ЛУЧШИХ АЗИМУТОВ ===
+            # === ОБРАБОТКА СБАЛАНСИРОВАННЫХ АЗИМУТОВ (то, что выбрали веса) ===
             best_traffic_val = result['best_traffic']
             intervals_map = result['sector_interval_map']
             optimizer = result['optimizer']
 
-            # Ищем все азимуты с максимальным трафиком
-            all_best_azimuths = []
-            for az, traffic in result['best_traffic_azimuth'].items():
-                if isinstance(traffic, list):
-                    all_best_azimuths.extend(traffic)
-                elif round(result['best_traffic_azimuth'][list(result['best_traffic_azimuth'].keys())[0]][0],
-                           0) == round(traffic, 0):
-                    # Fallback если структура словаря другая, но обычно там список
-                    pass
+            # Берём азимуты именно из balanced_result — это то, что выбрали веса
+            balanced_res = result['balanced_result']
+            balanced_azimuths = balanced_res['best_azimuths']
 
-                    # Более надежный способ получить список лучших азимутов из результата main
-            # Так как main возвращает best_traffic_azimuth, мы берем значения этого словаря
-            actual_best_azimuths = []
-            target_score = list(result['best_traffic_azimuth'].keys())[0]
-            for az_list in result['best_traffic_azimuth'].values():
-                if isinstance(az_list, list):
-                    actual_best_azimuths.extend(az_list)
-                else:
-                    actual_best_azimuths.append(az_list)
+            print(f"🔍 Найдено сбалансированных азимутов: {len(balanced_azimuths)} -> {balanced_azimuths}")
 
-            # Убираем дубликаты сохраняя порядок
-            seen = set()
-            unique_best_azimuths = []
-            for az in actual_best_azimuths:
-                if az not in seen:
-                    seen.add(az)
-                    unique_best_azimuths.append(az)
-
-            print(f"🔍 Найдено лучших азимутов: {len(unique_best_azimuths)} -> {unique_best_azimuths}")
-
-            # Создаем отдельную запись для визуализации КАЖДОГО лучшего азимута
-            for idx, az in enumerate(unique_best_azimuths):
+            # Создаем отдельную запись для визуализации КАЖДОГО сбалансированного азимута
+            for idx, az in enumerate(balanced_azimuths):
                 viz_entry = {
-                    'name': f"{config_name} (Вариант {idx + 1}: {az}°)",
+                    'name': f"{config_name} (Сбалансированный {idx + 1}: {az}°)",
                     'best_start_azimuth': az,
                     'intervals_at_best': intervals_map[az],
                     'best_traffic': float(best_traffic_val),
@@ -477,8 +462,8 @@ def main(
                     'sector_azimuths': optimizer.get_optimal_sector_azimuths(az)
                 }
                 all_results.append(viz_entry)
-                print(f"   ✅ Добавлен в визуализацию: Вариант {idx + 1} (Азимут {az}°)")
-            # ==============================================
+                print(f"   ✅ Добавлен в визуализацию: Сбалансированный {idx + 1} (Азимут {az}°)")
+            # ====================================================================
 
         except Exception as e:
             print(f"❌ Ошибка при анализе {config_name}: {e}")
@@ -504,22 +489,24 @@ def main(
 
 
 if __name__ == '__main__':
-    DEGRADATION_ZONE_WIDTH = 6
-    DEGRADATION_MIN_COEFFICIENT = 0.3
+    DEGRADATION_ZONE_WIDTH = 3
+    DEGRADATION_MIN_COEFFICIENT = 3.3
     DEGRADATION_MAX_COEFFICIENT = 1
-    IMBALANCE_WEIGHT = Decimal('1')
-    DEGRADATION_WEIGHT = Decimal('1')
+    IMBALANCE_WEIGHT = Decimal('0.5')
+    DEGRADATION_WEIGHT = Decimal('0.5')
     TRAFFIC_WEIGHT = Decimal('0')
 
     # Все конфигурации для перебора
     CONFIGURATIONS = {
-        "1) 120°(2x60°)": (60, 60,),
-        "2) 60°(2x30°)": (30, 30),
-        "3) 40°(2x20°)": (20, 20),
+        #"1) 120°(2x60°)": (60, 60,),
+        # "2) 60°(2x30°)": (30, 30),
+        #"3) 40°(2x20°)": (20, 20),
         "4) 120°(3x40°)": (40, 40, 40),
         "5) 60°(3x20°)": (20, 20, 20),
-        "60+40+60": (60, 40, 60),
-        "360°(3x120°)": (120, 120, 120),
+        #"60+40+60": (60, 40, 60),
+        #"360°(3x120°)": (120, 120, 120),
+        #"30°": (10, 10, 10),
+        "20°": (20,),
     }
     main(
         configurations=CONFIGURATIONS,
