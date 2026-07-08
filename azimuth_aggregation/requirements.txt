@@ -1,0 +1,6 @@
+pydantic
+fastapi[standard]
+granian
+itsdangerous
+polars
+asyncio
