@@ -746,6 +746,24 @@ commscope_hbw40_metrics3 = {"density_map": metrics3,
       'label': 'hbw40° (az132°)'},
  ]}
 
+huawei_xxx = {"density_map": metrics3,
+ "sector_configs": [
+     {'file': 'radiation_pattern/kathrein/741785X2.msi', 'azimuth': 265,
+      'label': 'hbw60° (az296°)'},
+     {'file': 'radiation_pattern/kathrein/741785X2.msi', 'azimuth': 313,
+      'label': 'hbw60° (az27°)'},
+     {'file': 'radiation_pattern/kathrein/741785X2.msi', 'azimuth': 361,
+      'label': 'hbw60° (az103°)'},
+
+{'file': 'radiation_pattern/commscope/2NPX210R-V1_Port 2 - -45_08DT_1805.msi', 'azimuth': 90,
+      'label': 'hbw60° (az292°)'},
+{'file': 'radiation_pattern/commscope/2NPX210R-V1_Port 2 - -45_08DT_1805.msi', 'azimuth': 164,
+      'label': 'hbw60° (az292°)'},
+{'file': 'radiation_pattern/commscope/2NPX210R-V1_Port 2 - -45_08DT_1805.msi', 'azimuth': 245,
+      'label': 'hbw60° (az292°)'},
+ ]
+ }
+
 
 if __name__ == "__main__":
     """
@@ -756,7 +774,7 @@ if __name__ == "__main__":
     commscope_hbw40_metrics3
     """
 
-    sector_configs = huawei_hbw60_metrics3
+    sector_configs = huawei_xxx
     try:
         density_map = convert_to_decimal(sector_configs["density_map"])
 
